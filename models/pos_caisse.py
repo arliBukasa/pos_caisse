@@ -28,9 +28,7 @@ class PosVendeur(models.Model):
         """Calculer les statistiques de vente pour chaque vendeur"""
         for vendeur in self:
             # Chercher les commandes liées à ce vendeur
-            commandes = self.env['pos.caisse.commande'].search([
-                ('client_card', '=', vendeur.carte_numero)
-            ])
+            commandes = self.env['pos.caisse.commande'].search(['|', ('client_card', '=', vendeur.carte_numero), ('vendeur_id', '=', vendeur.id)])
             vendeur.total_commandes = len(commandes)
             vendeur.total_ventes = sum(commandes.mapped('total'))
             vendeur.commission_totale = vendeur.total_ventes * (vendeur.pourcentage_commission / 100)
@@ -218,11 +216,15 @@ class PosCommande(models.Model):
 
     @api.model
     def create(self, vals):
-        """Créer automatiquement le mouvement de caisse lors de la création de commande"""
-        commande = super().create(vals)
-        # Ne pas créer de mouvement automatiquement à la création, 
-        # seulement à la confirmation
-        return commande
+        """Enforce vendor linkage and keep movement creation at confirmation."""
+        card = vals.get('client_card')
+        if card and not vals.get('vendeur_id'):
+            v = self.env['pos.caisse.vendeur'].sudo().search([('carte_numero', '=', card)], limit=1)
+            if v:
+                vals['vendeur_id'] = v.id
+                if not vals.get('client_name'):
+                    vals['client_name'] = v.name
+        return super().create(vals)
 
     def write(self, vals):
         """Mettre à jour le mouvement de caisse si le total change"""
