@@ -1,0 +1,89 @@
+<odoo>
+    <!-- Séquences pour la numérotation -->
+    <record id="seq_pos_caisse_commande" model="ir.sequence">
+        <field name="name">Commande POS Caisse</field>
+        <field name="code">pos.caisse.commande</field>
+        <field name="prefix">CMD-</field>
+        <field name="padding">5</field>
+        <field name="number_next">1</field>
+        <field name="number_increment">1</field>
+    </record>
+
+    <!-- Configuration par défaut -->
+    <record id="config_prix_sac" model="ir.config_parameter">
+        <field name="key">pos_caisse.prix_sac</field>
+        <field name="value">222000</field>
+    </record>
+
+    <record id="config_quantite_pain_par_sac" model="ir.config_parameter">
+        <field name="key">pos_caisse.quantite_pain_par_sac</field>
+        <field name="value">444</field>
+    </record>
+
+    <record id="config_prix_pain" model="ir.config_parameter">
+        <field name="key">pos_caisse.prix_pain</field>
+        <field name="value">500</field>
+    </record>
+
+    <record id="config_pourcentage_vendeur" model="ir.config_parameter">
+        <field name="key">pos_caisse.pourcentage_vendeur</field>
+        <field name="value">25</field>
+    </record>
+
+    <!-- Données de démonstration - Types de pain -->
+    <record id="type_pain_complet" model="pos.caisse.type.pain">
+        <field name="name">Pain complet</field>
+        <field name="prix">500</field>
+        <field name="poids">400</field>
+        <field name="description">Pain complet traditionnel</field>
+    </record>
+
+    <record id="type_pain_blanc" model="pos.caisse.type.pain">
+        <field name="name">Pain blanc</field>
+        <field name="prix">450</field>
+        <field name="poids">350</field>
+        <field name="description">Pain blanc classique</field>
+    </record>
+
+    <record id="type_baguette" model="pos.caisse.type.pain">
+        <field name="name">Baguette</field>
+        <field name="prix">300</field>
+        <field name="poids">250</field>
+        <field name="description">Baguette française</field>
+    </record>
+
+    <record id="type_pain_sucre" model="pos.caisse.type.pain">
+        <field name="name">Pain sucré</field>
+        <field name="prix">600</field>
+        <field name="poids">450</field>
+        <field name="description">Pain sucré spécial</field>
+    </record>
+
+    <!-- Données de démonstration - Vendeurs -->
+    <record id="vendeur_jean" model="pos.caisse.vendeur">
+        <field name="carte_numero">V001</field>
+        <field name="name">Jean Mukendi</field>
+        <field name="telephone">+243 81 234 5678</field>
+        <field name="adresse">Kinshasa, Gombe</field>
+        <field name="pourcentage_commission">5.0</field>
+        <field name="active">True</field>
+    </record>
+
+    <record id="vendeur_marie" model="pos.caisse.vendeur">
+        <field name="carte_numero">V002</field>
+        <field name="name">Marie Kabila</field>
+        <field name="telephone">+243 97 345 6789</field>
+        <field name="adresse">Kinshasa, Lemba</field>
+        <field name="pourcentage_commission">3.5</field>
+        <field name="active">True</field>
+    </record>
+
+    <record id="vendeur_pierre" model="pos.caisse.vendeur">
+        <field name="carte_numero">V003</field>
+        <field name="name">Pierre Tshisekedi</field>
+        <field name="telephone">+243 82 456 7890</field>
+        <field name="adresse">Kinshasa, Matete</field>
+        <field name="pourcentage_commission">4.0</field>
+        <field name="active">True</field>
+    </record>
+</odoo>

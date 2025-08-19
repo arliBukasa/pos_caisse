@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="module_category_pos_caisse" model="ir.module.category">
+        <field name="name">POS Caisse</field>
+        <field name="description">Gestion de caisse POS</field>
+        <field name="sequence">10</field>
+    </record>
+
+    <record id="group_pos_caisse_user" model="res.groups">
+        <field name="name">Utilisateur Caisse</field>
+        <field name="category_id" ref="pos_caisse.module_category_pos_caisse"/>
+    </record>
+
+    <record id="group_pos_caisse_manager" model="res.groups">
+        <field name="name">Manager Caisse</field>
+        <field name="category_id" ref="pos_caisse.module_category_pos_caisse"/>
+        <field name="implied_ids" eval="[(4, ref('pos_caisse.group_pos_caisse_user'))]"/>
+    </record>
+</odoo>

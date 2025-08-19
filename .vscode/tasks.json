@@ -1,0 +1,12 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "Odoo Server (dev)",
+      "type": "shell",
+      "command": "python odoo-bin -c odoo.conf",
+      "group": "build",
+      "problemMatcher": []
+    }
+  ]
+}

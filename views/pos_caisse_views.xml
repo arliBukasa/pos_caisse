@@ -1,0 +1,374 @@
+<odoo>
+    <!-- Vues pour Vendeurs -->
+    <record id="view_pos_caisse_vendeur_tree" model="ir.ui.view">
+        <field name="name">pos.caisse.vendeur.tree</field>
+        <field name="model">pos.caisse.vendeur</field>
+        <field name="arch" type="xml">
+            <tree>
+                <field name="carte_numero"/>
+                <field name="name"/>
+                <field name="telephone"/>
+                <field name="pourcentage_commission"/>
+                <field name="total_commandes"/>
+                <field name="total_ventes" widget="monetary"/>
+                <field name="commission_totale" widget="monetary"/>
+                <field name="active"/>
+            </tree>
+        </field>
+    </record>
+
+    <record id="view_pos_caisse_vendeur_form" model="ir.ui.view">
+        <field name="name">pos.caisse.vendeur.form</field>
+        <field name="model">pos.caisse.vendeur</field>
+        <field name="arch" type="xml">
+            <form string="Vendeur">
+                <sheet>
+                    <group>
+                        <group>
+                            <field name="carte_numero" placeholder="Ex: V001, V002..."/>
+                            <field name="name" placeholder="Nom complet du vendeur"/>
+                            <field name="active"/>
+                        </group>
+                        <group>
+                            <field name="telephone" placeholder="+243 xxx xxx xxx"/>
+                            <field name="pourcentage_commission" widget="percentage"/>
+                        </group>
+                    </group>
+                    <group>
+                        <field name="adresse" placeholder="Adresse complète"/>
+                    </group>
+                    <group string="Statistiques" col="3">
+                        <field name="total_commandes" readonly="1"/>
+                        <field name="total_ventes" widget="monetary" readonly="1"/>
+                        <field name="commission_totale" widget="monetary" readonly="1"/>
+                    </group>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <!-- Action pour Vendeurs - MOVED TO MENU FILE -->
+
+    <!-- Vues pour Types de Pain -->
+    <record id="view_pos_caisse_type_pain_tree" model="ir.ui.view">
+        <field name="name">pos.caisse.type.pain.tree</field>
+        <field name="model">pos.caisse.type.pain</field>
+        <field name="arch" type="xml">
+            <tree>
+                <field name="name"/>
+                <field name="prix" widget="monetary"/>
+                <field name="poids"/>
+                <field name="active"/>
+            </tree>
+        </field>
+    </record>
+
+    <record id="view_pos_caisse_type_pain_form" model="ir.ui.view">
+        <field name="name">pos.caisse.type.pain.form</field>
+        <field name="model">pos.caisse.type.pain</field>
+        <field name="arch" type="xml">
+            <form string="Type de Pain">
+                <sheet>
+                    <group>
+                        <group>
+                            <field name="name" placeholder="Ex: Pain complet, Pain blanc..."/>
+                            <field name="active"/>
+                        </group>
+                        <group>
+                            <field name="prix" widget="monetary"/>
+                            <field name="poids" widget="float"/>
+                        </group>
+                    </group>
+                    <group>
+                        <field name="description" placeholder="Description optionnelle du type de pain"/>
+                    </group>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <!-- Action pour Types de Pain -->
+    <record id="action_pos_caisse_type_pain" model="ir.actions.act_window">
+        <field name="name">Types de Pain</field>
+        <field name="res_model">pos.caisse.type.pain</field>
+        <field name="view_mode">tree,form</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Créer un nouveau type de pain
+            </p>
+            <p>
+                Définissez les différents types de pain avec leur prix et poids unitaire.
+            </p>
+        </field>
+    </record>
+
+    <!-- Vues pour Sessions de Caisse -->
+    <record id="view_pos_caisse_session_tree" model="ir.ui.view">
+        <field name="name">pos.caisse.session.tree</field>
+        <field name="model">pos.caisse.session</field>
+        <field name="arch" type="xml">
+            <tree>
+                <field name="name"/>
+                <field name="date"/>
+                <field name="user_id"/>
+                <field name="state"/>
+            </tree>
+        </field>
+    </record>
+    <record id="view_pos_caisse_session_form" model="ir.ui.view">
+        <field name="name">pos.caisse.session.form</field>
+        <field name="model">pos.caisse.session</field>
+        <field name="arch" type="xml">
+            <form>
+                <header>
+                    <button name="action_open_session" type="object" string="Ouvrir Session" 
+                            class="btn-primary" states="ferme"/>
+                    <button name="action_close_session" type="object" string="Fermer Session" 
+                            class="btn-secondary" states="ouvert"/>
+                    <field name="state" widget="statusbar" statusbar_visible="ouvert,ferme"/>
+                </header>
+                <sheet>
+                    <div class="oe_title">
+                        <h1><field name="name"/></h1>
+                    </div>
+                    <group>
+                        <group>
+                            <field name="date"/>
+                            <field name="user_id"/>
+                        </group>
+                        <group>
+                            <field name="date_cloture" readonly="1"/>
+                            <field name="total_montant" widget="monetary" readonly="1"/>
+                        </group>
+                    </group>
+                    <notebook>
+                        <page string="Commandes">
+                            <field name="commande_ids">
+                                <tree editable="bottom">
+                                    <field name="date"/>
+                                    <field name="client_card"/>
+                                    <field name="client_name"/>
+                                    <field name="type_paiement"/>
+                                    <field name="total"/>
+                                </tree>
+                            </field>
+                        </page>
+                        <page string="Mouvements">
+                            <field name="mouvement_ids">
+                                <tree editable="bottom">
+                                    <field name="date"/>
+                                    <field name="type"/>
+                                    <field name="montant"/>
+                                    <field name="motif"/>
+                                </tree>
+                            </field>
+                        </page>
+                    </notebook>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="view_pos_caisse_session_kanban" model="ir.ui.view">
+        <field name="name">pos.caisse.session.kanban</field>
+        <field name="model">pos.caisse.session</field>
+        <field name="arch" type="xml">
+            <kanban class="o_kanban_dashboard" create="false">
+                <field name="name"/>
+                <field name="date"/>
+                <field name="user_id"/>
+                <field name="state"/>
+                <field name="total_commandes"/>
+                <field name="total_montant"/>
+                <field name="total_mouvements"/>
+                <templates>
+                    <t t-name="kanban-box">
+                        <div class="oe_kanban_global_click o_kanban_record_has_image_fill o_kanban_dashboard">
+                            <div class="o_kanban_card_header">
+                                <div class="o_kanban_card_header_title">
+                                    <div class="o_primary">
+                                        <strong><field name="name"/></strong>
+                                    </div>
+                                    <div class="o_secondary">
+                                        <field name="date"/>
+                                    </div>
+                                </div>
+                                <div class="o_kanban_manage_button_section">
+                                    <a class="o_kanban_manage_toggle_button" href="#">
+                                        <i class="fa fa-ellipsis-v" role="img" aria-label="Menu" title="Menu"/>
+                                    </a>
+                                </div>
+                            </div>
+                            <div class="container o_kanban_card_content">
+                                <div class="row">
+                                    <div class="col-6 o_kanban_primary_left">
+                                        <button class="btn btn-primary" type="object" name="action_open_session" t-if="record.state.raw_value == 'ferme'">
+                                            <i class="fa fa-play"/> Ouvrir
+                                        </button>
+                                        <button class="btn btn-warning" type="object" name="action_close_session" t-if="record.state.raw_value == 'ouvert'">
+                                            <i class="fa fa-stop"/> Fermer
+                                        </button>
+                                        <span class="badge badge-success" t-if="record.state.raw_value == 'ouvert'">
+                                            <i class="fa fa-circle"/> Ouvert
+                                        </span>
+                                        <span class="badge badge-secondary" t-if="record.state.raw_value == 'ferme'">
+                                            <i class="fa fa-circle"/> Fermé
+                                        </span>
+                                    </div>
+                                    <div class="col-6">
+                                        <div class="o_kanban_primary_right">
+                                            <div class="mb8">
+                                                <strong>Vendeur:</strong>
+                                                <field name="user_id"/>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="row mt16">
+                                    <div class="col-4 text-center">
+                                        <span class="o_dashboard_common_stats">
+                                            <field name="total_commandes"/>
+                                        </span>
+                                        <div class="o_dashboard_common_stats_desc">
+                                            Commandes
+                                        </div>
+                                    </div>
+                                    <div class="col-4 text-center">
+                                        <span class="o_dashboard_common_stats">
+                                            <field name="total_montant" widget="monetary"/>
+                                        </span>
+                                        <div class="o_dashboard_common_stats_desc">
+                                            Chiffre d'affaires
+                                        </div>
+                                    </div>
+                                    <div class="col-4 text-center">
+                                        <span class="o_dashboard_common_stats">
+                                            <field name="total_mouvements"/>
+                                        </span>
+                                        <div class="o_dashboard_common_stats_desc">
+                                            Mouvements
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="o_kanban_card_manage_pane dropdown-menu" role="menu">
+                                <a role="menuitem" type="edit" class="dropdown-item">Modifier</a>
+                                <a role="menuitem" type="delete" class="dropdown-item">Supprimer</a>
+                            </div>
+                        </div>
+                    </t>
+                </templates>
+            </kanban>
+        </field>
+    </record>
+
+    <!-- Vues pour les Commandes -->
+    <record id="view_pos_caisse_commande_tree" model="ir.ui.view">
+        <field name="name">pos.caisse.commande.tree</field>
+        <field name="model">pos.caisse.commande</field>
+        <field name="arch" type="xml">
+            <tree decoration-success="state=='livre'" decoration-info="state=='en_attente_livraison'" decoration-muted="state=='annule'">               
+                <field name="name"/>
+                <field name="date"/>
+                <field name="client_card"/>
+                <field name="client_name"/>
+                <field name="type_paiement"/>
+                <field name="total" sum="Total"/>
+                <field name="state"/>
+                <field name="session_id"/>
+                <field name="idempotency_key"/>
+            </tree>
+        </field>
+    </record>
+
+    <record id="view_pos_caisse_commande_form" model="ir.ui.view">
+        <field name="name">pos.caisse.commande.form</field>
+        <field name="model">pos.caisse.commande</field>
+        <field name="arch" type="xml">
+            <form string="Commande">
+                <header>
+                    <button name="action_confirmer" type="object" string="Confirmer" 
+                            class="btn-primary" states="draft"/>
+                    <field name="state" widget="statusbar" statusbar_visible="draft,confirme,en_attente_livraison,livre"/>
+                </header>
+                <sheet>
+                    <div class="oe_title">
+                        <h1>
+                            <field name="name" readonly="1"/>
+                        </h1>
+                    </div>
+                    <group>
+                        <group>
+                            <field name="session_id" options="{'no_create': True}" required="1"/>
+                            <field name="date"/>
+                            <field name="client_card" placeholder="Ex: C001, C002..."/>
+                        </group>
+                        <group>
+                            <field name="client_name" placeholder="Nom complet du client"/>
+                            <field name="type_paiement" widget="radio"/>
+                            <field name="total" readonly="1"/>
+                        </group>
+                    </group>
+                    <notebook>
+                        <page string="Lignes de commande">
+                            <field name="line_ids">
+                                <tree editable="bottom">
+                                    <field name="type_pain_id" placeholder="Sélectionner un type de pain"/>
+                                    <field name="quantite"/>
+                                    <field name="prix_unitaire" readonly="1"/>
+                                    <field name="poids_unitaire" readonly="1"/>
+                                    <field name="poids_total" readonly="1"/>
+                                    <field name="sous_total" readonly="1"/>
+                                </tree>
+                            </field>
+                            <group class="oe_subtotal_footer oe_right">
+                                <field name="total" readonly="1" class="oe_subtotal_footer_separator"/>
+                            </group>
+                        </page>
+                    </notebook>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <!-- Vues pour les Mouvements de Caisse -->
+    <record id="view_pos_caisse_mouvement_tree" model="ir.ui.view">
+        <field name="name">pos.caisse.mouvement.tree</field>
+        <field name="model">pos.caisse.mouvement</field>
+        <field name="arch" type="xml">
+            <tree decoration-success="type=='entree'" decoration-warning="type=='sortie'">
+                <field name="date"/>
+                <field name="type"/>
+                <field name="montant" sum="Total"/>
+                <field name="motif"/>
+                <field name="commande_id"/>
+                <field name="user_id"/>
+                <field name="session_id"/>
+            </tree>
+        </field>
+    </record>
+
+    <record id="view_pos_caisse_mouvement_form" model="ir.ui.view">
+        <field name="name">pos.caisse.mouvement.form</field>
+        <field name="model">pos.caisse.mouvement</field>
+        <field name="arch" type="xml">
+            <form string="Mouvement de Caisse">
+                <sheet>
+                    <group>
+                        <group>
+                            <field name="session_id" options="{'no_create': True}" required="1"/>
+                            <field name="date"/>
+                            <field name="type" widget="radio"/>
+                        </group>
+                        <group>
+                            <field name="montant"/>
+                            <field name="motif" placeholder="Raison du mouvement (obligatoire pour sortie)"/>
+                            <field name="commande_id" readonly="1" attrs="{'invisible': [('commande_id', '=', False)]}"/>
+                            <field name="user_id" readonly="1"/>
+                        </group>
+                    </group>
+                </sheet>
+            </form>
+        </field>
+    </record>
+</odoo>

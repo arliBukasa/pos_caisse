@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Actions pour les autres modules -->
+    <record id="action_pos_caisse_vendeur" model="ir.actions.act_window">
+        <field name="name">Vendeurs</field>
+        <field name="res_model">pos.caisse.vendeur</field>
+        <field name="view_mode">tree,form</field>
+    </record>
+
+    <record id="action_pos_caisse_type_pain" model="ir.actions.act_window">
+        <field name="name">Types de Pain</field>
+        <field name="res_model">pos.caisse.type.pain</field>
+        <field name="view_mode">tree,form</field>
+    </record>
+
+    <record id="action_pos_caisse_commande" model="ir.actions.act_window">
+        <field name="name">Commandes</field>
+        <field name="res_model">pos.caisse.commande</field>
+        <field name="view_mode">tree,form</field>
+    </record>
+
+    <record id="action_pos_caisse_mouvement" model="ir.actions.act_window">
+        <field name="name">Mouvements de caisse</field>
+        <field name="res_model">pos.caisse.mouvement</field>
+        <field name="view_mode">tree,form</field>
+    </record>
+
+    <!-- Menus additionnels -->
+    <menuitem id="menu_pos_caisse_vendeur" name="Vendeurs" parent="menu_pos_caisse_root" action="action_pos_caisse_vendeur" sequence="1"/>
+    <menuitem id="menu_pos_caisse_type_pain" name="Types de Pain" parent="menu_pos_caisse_root" action="action_pos_caisse_type_pain" sequence="2"/>
+    <menuitem id="menu_pos_caisse_commande" name="Commandes" parent="menu_pos_caisse_root" action="action_pos_caisse_commande" sequence="4"/>
+    <menuitem id="menu_pos_caisse_mouvement" name="Mouvements" parent="menu_pos_caisse_root" action="action_pos_caisse_mouvement" sequence="5"/>
+</odoo>

@@ -1,0 +1,68 @@
+<odoo>
+    <!-- Actions définies en premier -->
+    <record id="action_pos_caisse_vendeur" model="ir.actions.act_window">
+        <field name="name">Vendeurs</field>
+        <field name="res_model">pos.caisse.vendeur</field>
+        <field name="view_mode">tree,form</field>
+        <field name="groups_id" eval="[(4, ref('pos_caisse.group_pos_caisse_user')), (4, ref('pos_caisse.group_pos_caisse_manager'))]"/>
+    </record>
+
+    <record id="action_pos_caisse_type_pain" model="ir.actions.act_window">
+        <field name="name">Types de Pain</field>
+        <field name="res_model">pos.caisse.type.pain</field>
+        <field name="view_mode">tree,form</field>
+        <field name="groups_id" eval="[(4, ref('pos_caisse.group_pos_caisse_user')), (4, ref('pos_caisse.group_pos_caisse_manager'))]"/>
+    </record>
+
+    <record id="action_pos_caisse_session" model="ir.actions.act_window">
+        <field name="name">Sessions de caisse</field>
+        <field name="res_model">pos.caisse.session</field>
+        <field name="view_mode">kanban,tree,form</field>
+        <field name="groups_id" eval="[(4, ref('pos_caisse.group_pos_caisse_user')), (4, ref('pos_caisse.group_pos_caisse_manager'))]"/>
+    </record>
+
+    <record id="action_pos_caisse_commande" model="ir.actions.act_window">
+        <field name="name">Commandes</field>
+        <field name="res_model">pos.caisse.commande</field>
+        <field name="view_mode">tree,form</field>
+        <field name="groups_id" eval="[(4, ref('pos_caisse.group_pos_caisse_user')), (4, ref('pos_caisse.group_pos_caisse_manager'))]"/>
+    </record>
+
+    <record id="action_pos_caisse_mouvement" model="ir.actions.act_window">
+        <field name="name">Mouvements de caisse</field>
+        <field name="res_model">pos.caisse.mouvement</field>
+        <field name="view_mode">tree,form</field>
+        <field name="groups_id" eval="[(4, ref('pos_caisse.group_pos_caisse_user')), (4, ref('pos_caisse.group_pos_caisse_manager'))]"/>
+    </record>
+
+    <!-- Action pour nouvelle commande -->
+    <record id="action_pos_caisse_nouvelle_commande" model="ir.actions.act_window">
+        <field name="name">Nouvelle Commande</field>
+        <field name="res_model">pos.caisse.commande</field>
+        <field name="view_mode">form,tree</field>
+        <field name="target">new</field>
+        <field name="groups_id" eval="[(4, ref('pos_caisse.group_pos_caisse_user')), (4, ref('pos_caisse.group_pos_caisse_manager'))]"/>
+    </record>
+
+    <!-- Action pour sortie de caisse -->
+    <record id="action_pos_caisse_sortie_caisse" model="ir.actions.act_window">
+        <field name="name">Sortie de Caisse</field>
+        <field name="res_model">pos.caisse.mouvement</field>
+        <field name="view_mode">form,tree</field>
+        <field name="target">new</field>
+        <field name="context">{'default_type': 'sortie'}</field>
+        <field name="groups_id" eval="[(4, ref('pos_caisse.group_pos_caisse_user')), (4, ref('pos_caisse.group_pos_caisse_manager'))]"/>
+    </record>
+    
+    <!-- Menus -->
+    <menuitem id="menu_pos_caisse_root" name="Caisse" sequence="10" groups="pos_caisse.group_pos_caisse_user,pos_caisse.group_pos_caisse_manager"/>
+    <menuitem id="menu_pos_caisse_vendeur" name="Vendeurs" parent="menu_pos_caisse_root" action="action_pos_caisse_vendeur" sequence="1" groups="pos_caisse.group_pos_caisse_user,pos_caisse.group_pos_caisse_manager"/>
+    <menuitem id="menu_pos_caisse_type_pain" name="Types de Pain" parent="menu_pos_caisse_root" action="action_pos_caisse_type_pain" sequence="2" groups="pos_caisse.group_pos_caisse_user,pos_caisse.group_pos_caisse_manager"/>
+    <menuitem id="menu_pos_caisse_session" name="Sessions de caisse" parent="menu_pos_caisse_root" action="action_pos_caisse_session" sequence="3" groups="pos_caisse.group_pos_caisse_user,pos_caisse.group_pos_caisse_manager"/>
+    <menuitem id="menu_pos_caisse_commande" name="Commandes" parent="menu_pos_caisse_root" action="action_pos_caisse_commande" sequence="4" groups="pos_caisse.group_pos_caisse_user,pos_caisse.group_pos_caisse_manager"/>
+    <menuitem id="menu_pos_caisse_mouvement" name="Mouvements" parent="menu_pos_caisse_root" action="action_pos_caisse_mouvement" sequence="5" groups="pos_caisse.group_pos_caisse_user,pos_caisse.group_pos_caisse_manager"/>
+    
+    <!-- Menus raccourcis -->
+    <menuitem id="menu_pos_caisse_nouvelle_commande" name="Nouvelle Commande" parent="menu_pos_caisse_root" action="action_pos_caisse_nouvelle_commande" sequence="6" groups="pos_caisse.group_pos_caisse_user,pos_caisse.group_pos_caisse_manager"/>
+    <menuitem id="menu_pos_caisse_sortie_caisse" name="Sortie de Caisse" parent="menu_pos_caisse_root" action="action_pos_caisse_sortie_caisse" sequence="7" groups="pos_caisse.group_pos_caisse_user,pos_caisse.group_pos_caisse_manager"/>
+</odoo>

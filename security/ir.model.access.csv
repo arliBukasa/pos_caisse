@@ -1,0 +1,13 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_pos_caisse_vendeur_user,pos.caisse.vendeur.user,model_pos_caisse_vendeur,pos_caisse.group_pos_caisse_user,1,1,1,0
+access_pos_caisse_vendeur_manager,pos.caisse.vendeur.manager,model_pos_caisse_vendeur,pos_caisse.group_pos_caisse_manager,1,1,1,1
+access_pos_caisse_type_pain_user,pos.caisse.type.pain.user,model_pos_caisse_type_pain,pos_caisse.group_pos_caisse_user,1,1,1,0
+access_pos_caisse_type_pain_manager,pos.caisse.type.pain.manager,model_pos_caisse_type_pain,pos_caisse.group_pos_caisse_manager,1,1,1,1
+access_pos_caisse_session_user,pos.caisse.session.user,model_pos_caisse_session,pos_caisse.group_pos_caisse_user,1,1,1,0
+access_pos_caisse_session_manager,pos.caisse.session.manager,model_pos_caisse_session,pos_caisse.group_pos_caisse_manager,1,1,1,1
+access_pos_caisse_commande_user,pos.caisse.commande.user,model_pos_caisse_commande,pos_caisse.group_pos_caisse_user,1,1,1,0
+access_pos_caisse_commande_manager,pos.caisse.commande.manager,model_pos_caisse_commande,pos_caisse.group_pos_caisse_manager,1,1,1,1
+access_pos_caisse_commande_line_user,pos.caisse.commande.line.user,model_pos_caisse_commande_line,pos_caisse.group_pos_caisse_user,1,1,1,0
+access_pos_caisse_commande_line_manager,pos.caisse.commande.line.manager,model_pos_caisse_commande_line,pos_caisse.group_pos_caisse_manager,1,1,1,1
+access_pos_caisse_mouvement_user,pos.caisse.mouvement.user,model_pos_caisse_mouvement,pos_caisse.group_pos_caisse_user,1,1,1,0
+access_pos_caisse_mouvement_manager,pos.caisse.mouvement.manager,model_pos_caisse_mouvement,pos_caisse.group_pos_caisse_manager,1,1,1,1

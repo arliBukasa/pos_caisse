@@ -1,0 +1,159 @@
+<odoo>
+    <!-- Template de rapport de vente pour impression -->
+    <record id="action_rapport_vente_session" model="ir.actions.report">
+        <field name="name">Rapport de vente - Session</field>
+        <field name="model">pos.caisse.session</field>
+        <field name="report_type">qweb-pdf</field>
+        <field name="report_name">pos_caisse.rapport_vente_session_template</field>
+        <field name="report_file">pos_caisse.rapport_vente_session_template</field>
+        <field name="binding_model_id" ref="model_pos_caisse_session"/>
+        <field name="binding_type">report</field>
+    </record>
+
+    <template id="rapport_vente_session_template">
+        <t t-call="web.html_container">
+            <t t-foreach="docs" t-as="session">
+                <div class="page">
+                    <div class="oe_structure">
+                        <div class="row">
+                            <div class="col-xs-12 text-center">
+                                <h2>RAPPORT DE VENTE</h2>
+                                <h3>SUMNI POS v2</h3>
+                                <hr/>
+                            </div>
+                        </div>
+                        
+                        <div class="row mb16">
+                            <div class="col-xs-6">
+                                <strong>Session:</strong> <span t-field="session.name"/><br/>
+                                <strong>Date d'ouverture:</strong> <span t-field="session.date"/><br/>
+                                <strong>Date de clôture:</strong> <span t-field="session.date_cloture"/><br/>
+                            </div>
+                            <div class="col-xs-6">
+                                <strong>Caissier:</strong> <span t-field="session.user_id.name"/><br/>
+                                <strong>État:</strong> <span t-field="session.state"/><br/>
+                            </div>
+                        </div>
+
+                        <!-- Résumé financier -->
+                        <div class="row">
+                            <div class="col-xs-12">
+                                <h4>RÉSUMÉ FINANCIER</h4>
+                                <table class="table table-bordered">
+                                    <tr>
+                                        <td><strong>Total des commandes Cash:</strong></td>
+                                        <td class="text-right"><span t-esc="session.total_montant - session.total_bp"/> FC</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Total des commandes BP:</strong></td>
+                                        <td class="text-right"><span t-field="session.total_bp"/> FC</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Total des sorties de caisse:</strong></td>
+                                        <td class="text-right"><span t-field="session.montant_sortie"/> FC</td>
+                                    </tr>
+                                    <tr class="bg-primary">
+                                        <td><strong>MONTANT EN CAISSE:</strong></td>
+                                        <td class="text-right"><strong><span t-field="session.montant_en_caisse"/> FC</strong></td>
+                                    </tr>
+                                </table>
+                            </div>
+                        </div>
+
+                        <!-- Détail des commandes -->
+                        <div class="row mt16">
+                            <div class="col-xs-12">
+                                <h4>DÉTAIL DES COMMANDES</h4>
+                                <table class="table table-striped table-condensed">
+                                    <thead>
+                                        <tr>
+                                            <th>Numéro</th>
+                                            <th>Client (Carte)</th>
+                                            <th>Nom Client</th>
+                                            <th>Type</th>
+                                            <th>Total</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <t t-foreach="session.commande_ids" t-as="commande">
+                                            <tr>
+                                                <td><span t-field="commande.name"/></td>
+                                                <td><span t-field="commande.client_card"/></td>
+                                                <td><span t-field="commande.client_name"/></td>
+                                                <td><span t-field="commande.type_paiement"/></td>
+                                                <td class="text-right"><span t-field="commande.total"/> FC</td>
+                                            </tr>
+                                        </t>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+
+                        <!-- Commandes BP si il y en a -->
+                        <t t-if="session.total_bp > 0">
+                            <div class="row mt16">
+                                <div class="col-xs-12">
+                                    <h4>COMMANDES BP (À PAYER FIN DE MOIS)</h4>
+                                    <table class="table table-striped table-condensed">
+                                        <thead>
+                                            <tr>
+                                                <th>Carte Client</th>
+                                                <th>Nom Client</th>
+                                                <th>Montant</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <t t-foreach="session.commande_ids.filtered(lambda c: c.type_paiement == 'bp')" t-as="commande_bp">
+                                                <tr>
+                                                    <td><span t-field="commande_bp.client_card"/></td>
+                                                    <td><span t-field="commande_bp.client_name"/></td>
+                                                    <td class="text-right"><span t-field="commande_bp.total"/> FC</td>
+                                                </tr>
+                                            </t>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </t>
+
+                        <!-- Mouvements de caisse -->
+                        <t t-if="session.mouvement_ids.filtered(lambda m: m.type == 'sortie')">
+                            <div class="row mt16">
+                                <div class="col-xs-12">
+                                    <h4>SORTIES DE CAISSE</h4>
+                                    <table class="table table-striped table-condensed">
+                                        <thead>
+                                            <tr>
+                                                <th>Date</th>
+                                                <th>Motif</th>
+                                                <th>Montant</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <t t-foreach="session.mouvement_ids.filtered(lambda m: m.type == 'sortie')" t-as="sortie">
+                                                <tr>
+                                                    <td><span t-field="sortie.date"/></td>
+                                                    <td><span t-field="sortie.motif"/></td>
+                                                    <td class="text-right"><span t-field="sortie.montant"/> FC</td>
+                                                </tr>
+                                            </t>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </t>
+
+                        <!-- Pied de page -->
+                        <div class="row mt32">
+                            <div class="col-xs-12 text-center">
+                                <hr/>
+                                <p>Rapport généré le <span t-esc="context_timestamp(datetime.datetime.now()).strftime('%d/%m/%Y à %H:%M')"/></p>
+                                <p><strong>SUMNI POS v2 - Système de gestion de caisse</strong></p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </t>
+        </t>
+    </template>
+</odoo>
