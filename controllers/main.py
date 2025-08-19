@@ -7,14 +7,6 @@ class PosCaisseApi(http.Controller):
         user = request.env.user
         # Consider system admin or caisse manager as admin for this API
         return user.has_group('base.group_system') or user.has_group('pos_caisse.group_pos_caisse_manager') or user.id == 1
-
-    def _jsonrpc(self, result=None, error=None):
-        payload = {'jsonrpc': '2.0', 'id': None}
-        if error:
-            payload['error'] = {'code': -32000, 'message': str(error)}
-        else:
-            payload['result'] = result or {}
-        return payload
     @http.route('/api/pos_caisse/commandes', type='json', auth='user', methods=['GET', 'POST'], csrf=False)
     def create_commande(self, **kwargs):
         """Créer une commande POS avec ses lignes.
@@ -36,9 +28,9 @@ class PosCaisseApi(http.Controller):
             confirm = bool(params.get('confirm'))
 
             if not lignes:
-                return self._jsonrpc({"status": "error", "message": "Aucune ligne fournie."})
+                return {"status": "error", "message": "Aucune ligne fournie."}
             if type_paiement not in ('cash', 'bp'):
-                return self._jsonrpc({"status": "error", "message": "type_paiement invalide (cash|bp)."})
+                return {"status": "error", "message": "type_paiement invalide (cash|bp)."}
 
             env = request.env
             uid = request.uid
@@ -49,13 +41,13 @@ class PosCaisseApi(http.Controller):
             if session_id:
                 session = env['pos.caisse.session'].sudo().browse(int(session_id))
                 if not session or not session.exists():
-                    return self._jsonrpc({"status": "error", "message": "Session introuvable."})
+                    return {"status": "error", "message": "Session introuvable."}
             else:
                 session = env['pos.caisse.session'].sudo().search([
                     ('user_id', '=', uid), ('state', '=', 'ouvert')
                 ], order='date desc', limit=1)
                 if not session:
-                    return self._jsonrpc({"status": "error", "message": "Aucune session ouverte pour l'utilisateur."})
+                    return {"status": "error", "message": "Aucune session ouverte pour l'utilisateur."}
 
             # Vendeur/Client
             logging.info(f" ======== Création de la commande POS pour les paramettres: {params}")
@@ -75,7 +67,7 @@ class PosCaisseApi(http.Controller):
                 existing_commande = env['pos.caisse.commande'].sudo().search([('idempotency_key', '=', idempotency_key)], limit=1)
                 if existing_commande:
                     logging.info(f"Commande POS existante trouvée avec idempotency_key {idempotency_key}: {existing_commande.id}")
-                    return self._jsonrpc({"status": "success", "commande": existing_commande.read(['id','name','state','total','mouvement_id'])[0]})
+                    return {"status": "success", "commande": existing_commande.read(['id','name','state','total','mouvement_id'])[0]}
 
             # Lignes préparées
             line_vals = []
@@ -111,9 +103,9 @@ class PosCaisseApi(http.Controller):
                 'total': commande.total,
                 'mouvement_id': commande.mouvement_id.id or None,
             }
-            return self._jsonrpc({"status": "success", "commande": data})
+            return {"status": "success", "commande": data}
         except Exception as e:
-            return self._jsonrpc({"status": "error", "message": str(e)})
+            return {"status": "error", "message": str(e)}
 
     @http.route('/api/pos_caisse/sessions', type='json', auth='user', methods=['GET', 'POST'], csrf=False)
     def get_or_manage_sessions(self, **kwargs):
@@ -155,9 +147,9 @@ class PosCaisseApi(http.Controller):
                 # Reuse existing open session if any for this user
                 existing = Session.search([('user_id', '=', uid), ('state', '=', 'ouvert')], limit=1)
                 if existing:
-                    return self._jsonrpc({'status': 'success', 'sessions': [_map(existing)]})
+                    return {'status': 'success', 'sessions': [_map(existing)]}
                 new_sess = Session.create({'user_id': uid, 'state': 'ouvert'})
-                return self._jsonrpc({'status': 'success', 'sessions': [_map(new_sess)]})
+                return {'status': 'success', 'sessions': [_map(new_sess)]}
 
             # Close session
             if action == 'close':
@@ -166,15 +158,15 @@ class PosCaisseApi(http.Controller):
                 if sid:
                     target = Session.browse(int(sid))
                     if not target or not target.exists():
-                        return self._jsonrpc({'status': 'error', 'message': 'Session introuvable'})
+                        return {'status': 'error', 'message': 'Session introuvable'}
                     if not is_admin and target.user_id.id != uid:
-                        return self._jsonrpc({'status': 'error', 'message': "Droits insuffisants pour fermer cette session"})
+                        return {'status': 'error', 'message': "Droits insuffisants pour fermer cette session"}
                 else:
                     target = Session.search([('user_id', '=', uid), ('state', '=', 'ouvert')], limit=1)
                     if not target:
-                        return self._jsonrpc({'status': 'error', 'message': "Aucune session ouverte"})
+                        return {'status': 'error', 'message': "Aucune session ouverte"}
                 target.action_close_session()
-                return self._jsonrpc({'status': 'success'})
+                return {'status': 'success'}
 
             # List sessions (default)
             domain = []
@@ -184,15 +176,15 @@ class PosCaisseApi(http.Controller):
                 domain.append(('user_id', '=', uid))
             total = Session.search_count(domain)
             sessions = Session.search(domain, order='date desc', offset=offset, limit=limit)
-            return self._jsonrpc({
+            return {
                 'status': 'success',
                 'sessions': [_map(s) for s in sessions],
                 'page': page,
                 'limit': limit,
                 'total': total,
-            })
+            }
         except Exception as e:
-            return self._jsonrpc(error=e)
+            return {'status': 'error', 'message': str(e)}
 
     @http.route('/api/pos_caisse/types_pain', type='json', auth='user', methods=['GET','POST'], csrf=False)
     def types_pain(self, **kwargs):
@@ -205,9 +197,9 @@ class PosCaisseApi(http.Controller):
                 domain = ['|', ('name', 'ilike', search), ('prix', '=', search)] + domain
             recs = request.env['pos.caisse.type.pain'].sudo().search(domain, limit=limit)
             data = [{'id': r.id, 'name': r.name, 'prix': r.prix, 'poids': r.poids, 'description': r.description, 'active': r.active} for r in recs]
-            return self._jsonrpc({'status': 'success', 'data': data})
+            return {'status': 'success', 'data': data}
         except Exception as e:
-            return self._jsonrpc({'status': 'error', 'message': str(e)})
+            return {'status': 'error', 'message': str(e)}
 
     @http.route('/api/pos_caisse/entree_caisse', type='json', auth='user', methods=['POST'], csrf=False)
     def entree_caisse(self, **kwargs):
@@ -217,14 +209,14 @@ class PosCaisseApi(http.Controller):
             montant = params.get('montant')
             motif = params.get('motif') or 'Entrée de caisse'
             if not session_id or not montant:
-                return self._jsonrpc({'status': 'error', 'message': 'session_id et montant requis'})
+                return {'status': 'error', 'message': 'session_id et montant requis'}
             Session = request.env['pos.caisse.session'].sudo()
             sess = Session.browse(int(session_id))
             if not sess or not sess.exists():
-                return self._jsonrpc({'status': 'error', 'message': 'Session introuvable'})
+                return {'status': 'error', 'message': 'Session introuvable'}
             uid = request.uid
             if not self._is_admin() and sess.user_id.id != uid:
-                return self._jsonrpc({'status': 'error', 'message': "Droits insuffisants"})
+                return {'status': 'error', 'message': "Droits insuffisants"}
             # Create movement
             request.env['pos.caisse.mouvement'].sudo().create({
                 'session_id': sess.id,
@@ -233,9 +225,9 @@ class PosCaisseApi(http.Controller):
                 'motif': motif,
                 'user_id': uid,
             })
-            return self._jsonrpc({'status': 'success'})
+            return {'status': 'success'}
         except Exception as e:
-            return self._jsonrpc(error=e)
+            return {'status': 'error', 'message': str(e)}
 
     @http.route('/api/pos_caisse/sortie_caisse', type='json', auth='user', methods=['POST'], csrf=False)
     def sortie_caisse(self, **kwargs):
@@ -245,14 +237,14 @@ class PosCaisseApi(http.Controller):
             montant = params.get('montant')
             motif = params.get('motif') or 'Sortie de caisse'
             if not session_id or not montant:
-                return self._jsonrpc({'status': 'error', 'message': 'session_id et montant requis'})
+                return {'status': 'error', 'message': 'session_id et montant requis'}
             Session = request.env['pos.caisse.session'].sudo()
             sess = Session.browse(int(session_id))
             if not sess or not sess.exists():
-                return self._jsonrpc({'status': 'error', 'message': 'Session introuvable'})
+                return {'status': 'error', 'message': 'Session introuvable'}
             uid = request.uid
             if not self._is_admin() and sess.user_id.id != uid:
-                return self._jsonrpc({'status': 'error', 'message': "Droits insuffisants"})
+                return {'status': 'error', 'message': "Droits insuffisants"}
             request.env['pos.caisse.mouvement'].sudo().create({
                 'session_id': sess.id,
                 'type': 'sortie',
@@ -260,6 +252,6 @@ class PosCaisseApi(http.Controller):
                 'motif': motif,
                 'user_id': uid,
             })
-            return self._jsonrpc({'status': 'success'})
+            return {'status': 'success'}
         except Exception as e:
-            return self._jsonrpc(error=e)
+            return {'status': 'error', 'message': str(e)}
