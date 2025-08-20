@@ -218,10 +218,27 @@ class PosCommande(models.Model):
 
     @api.model
     def create(self, vals):
-        """Enforce vendor linkage and keep movement creation at confirmation."""
+        """Enforce vendor linkage and auto-create vendor by card if missing.
+
+        - If a client card is provided and no vendeur_id, try to link to existing vendor.
+        - If not found, create a new pos.caisse.vendeur with the provided card and name, then link it.
+        """
         card = vals.get('client_card')
         if card and not vals.get('vendeur_id'):
-            v = self.env['pos.caisse.vendeur'].sudo().search([('carte_numero', '=', card)], limit=1)
+            Vendeur = self.env['pos.caisse.vendeur'].sudo()
+            v = Vendeur.search([('carte_numero', '=', card)], limit=1)
+            if not v:
+                # Create vendor automatically if it doesn't exist
+                name = vals.get('client_name') or f"Carte {card}"
+                try:
+                    v = Vendeur.create({
+                        'name': name,
+                        'carte_numero': card,
+                        'active': True,
+                    })
+                except Exception:
+                    # Handle rare race: if created concurrently, fetch it
+                    v = Vendeur.search([('carte_numero', '=', card)], limit=1)
             if v:
                 vals['vendeur_id'] = v.id
                 if not vals.get('client_name'):
@@ -229,7 +246,24 @@ class PosCommande(models.Model):
         return super().create(vals)
 
     def write(self, vals):
-        """Mettre à jour le mouvement de caisse si le total change"""
+        """Auto-link vendor on client_card change and update mouvement on total change"""
+        # If the client card is updated and no vendeur_id provided, link/create vendor
+        if vals.get('client_card') and not vals.get('vendeur_id'):
+            card = vals.get('client_card')
+            if card:
+                Vendeur = self.env['pos.caisse.vendeur'].sudo()
+                v = Vendeur.search([('carte_numero', '=', card)], limit=1)
+                if not v:
+                    name = vals.get('client_name') or f"Carte {card}"
+                    try:
+                        v = Vendeur.create({'name': name, 'carte_numero': card, 'active': True})
+                    except Exception:
+                        v = Vendeur.search([('carte_numero', '=', card)], limit=1)
+                if v:
+                    vals['vendeur_id'] = v.id
+                    if not vals.get('client_name'):
+                        vals['client_name'] = v.name
+
         result = super().write(vals)
         for commande in self:
             if commande.mouvement_id and 'total' in vals:
