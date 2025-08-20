@@ -12,7 +12,8 @@ class PosVendeur(models.Model):
     adresse = fields.Text('Adresse')
     active = fields.Boolean('Actif', default=True)
     pourcentage_commission = fields.Float('Commission (%)', default=25.0, help="Pourcentage de commission sur les ventes")
-    
+    # commandes
+    commande_ids = fields.One2many('pos.caisse.commande', 'vendeur_id', string="Commandes")
     # Statistiques calculées
     total_commandes = fields.Integer('Nombre de commandes', compute='_compute_stats', store=True)
     total_ventes = fields.Float('Total des ventes', compute='_compute_stats', store=True)
@@ -196,6 +197,7 @@ class PosCommande(models.Model):
         if self.vendeur_id:
             self.client_card = self.vendeur_id.carte_numero
             self.client_name = self.vendeur_id.name
+            self._onchange_client_card()
 
     @api.onchange('client_card')
     def _onchange_client_card(self):

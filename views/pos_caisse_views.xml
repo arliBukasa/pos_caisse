@@ -42,6 +42,21 @@
                         <field name="total_ventes" widget="monetary" readonly="1"/>
                         <field name="commission_totale" widget="monetary" readonly="1"/>
                     </group>
+                    <!-- notebook commandes associées -->
+                    <notebook>
+                        <page string="Commandes">
+                            <field name="commande_ids">
+                                <tree editable="bottom">
+                                    <field name="name"/>
+                                    <field name="date"/>
+                                    <field name="type_paiement"/>
+                                    <field name="total" sum="Total"/>
+                                    <field name="state" widget="tag"/>  
+                                </tree>
+                            </field>
+                        </page>
+                    </notebook>
+
                 </sheet>
             </form>
         </field>
@@ -302,9 +317,10 @@
                             <field name="session_id" options="{'no_create': True}" required="1"/>
                             <field name="date"/>
                             <field name="client_card" placeholder="Ex: C001, C002..."/>
+                            <field name="client_name" placeholder="Nom complet du client"/>
                         </group>
                         <group>
-                            <field name="client_name" placeholder="Nom complet du client"/>
+                            <field name="vendeur_id"/>
                             <field name="type_paiement" widget="radio"/>
                             <field name="total" readonly="1"/>
                         </group>
