@@ -1,12 +1,19 @@
 {
-  "version": "2.0.0",
-  "tasks": [
-    {
-      "label": "Odoo Server (dev)",
-      "type": "shell",
-      "command": "python odoo-bin -c odoo.conf",
-      "group": "build",
-      "problemMatcher": []
-    }
-  ]
+	"version": "2.0.0",
+	"tasks": [
+		{
+			"label": "Odoo Server (dev)",
+			"type": "shell",
+			"command": "python odoo-bin -c odoo.conf",
+			"group": "build",
+			"problemMatcher": []
+		},
+		{
+			"label": "Odoo Server (root)",
+			"type": "shell",
+			"command": "python C:\\odoo\\server\\odoo-bin -c C:\\odoo\\server\\odoo.conf",
+			"isBackground": false,
+			"group": "build"
+		}
+	]
 }
