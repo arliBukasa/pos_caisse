@@ -30,9 +30,32 @@
         <field name="value">25</field>
     </record>
 
-    <!-- Données de démonstration - Types de pain -->
+    <!-- Types de pain (défaut). noupdate=1 pour éviter les suppressions à l'upgrade. -->
+    <data noupdate="1">
+        <record id="type_pain_baguette" model="pos.caisse.type.pain">
+            <field name="name">Baguette</field>
+            <field name="prix">500</field>
+            <field name="poids">250</field>
+            <field name="description">Baguette classique</field>
+            <field name="active">True</field>
+        </record>
+        <record id="type_pain_complet" model="pos.caisse.type.pain">
+            <field name="name">Pain complet</field>
+            <field name="prix">600</field>
+            <field name="poids">300</field>
+            <field name="description">Farine complète</field>
+            <field name="active">True</field>
+        </record>
+        <record id="type_pain_blanc" model="pos.caisse.type.pain">
+            <field name="name">Pain blanc</field>
+            <field name="prix">500</field>
+            <field name="poids">280</field>
+            <field name="description">Farine blanche</field>
+            <field name="active">True</field>
+        </record>
+    </data>
 
 
-    <!-- Données de démonstration - Vendeurs -->
+    <!-- Vendeurs -->
 
 </odoo>

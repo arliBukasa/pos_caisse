@@ -1,6 +1,6 @@
 {
     'name': 'POS Caisse - Sumni v2',
-    'version': '15.0.1.0.0',
+    'version': '15.0.1.1.0',
     'summary': 'Gestion de caisse, commandes, sessions, mouvements de caisse avec API REST pour application mobile',
     'description': '''
         Module de gestion de caisse pour POS Sumni v2:

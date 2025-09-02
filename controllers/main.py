@@ -15,17 +15,19 @@ class PosCaisseApi(http.Controller):
           "session_id": Optional[int],
           "client_card": Optional[str],
           "client_name": Optional[str],
+                    "vc": Optional[bool],
           "type_paiement": "cash"|"bp",
           "lignes": [{"type_pain_id": int, "quantite": int}],
           "confirm": Optional[bool]
         }
-        Retour: { status, commande: {id, name, state, total, mouvement_id?} }
+                Retour: { status, commande: {id, name, state, total, is_vc, mouvement_id?} }
         """
         try:
             params = request.jsonrequest or kwargs or {}
             lignes = params.get('lignes') or []
             type_paiement = params.get('type_paiement') or 'cash'
             confirm = bool(params.get('confirm'))
+            is_vc = bool(params.get('vc') or params.get('is_vc'))
 
             if not lignes:
                 return {"status": "error", "message": "Aucune ligne fournie."}
@@ -87,6 +89,7 @@ class PosCaisseApi(http.Controller):
                 'client_card': client_card,
                 'client_name': client_name,
                 'type_paiement': type_paiement,
+                'is_vc': is_vc,
                 'line_ids': line_vals,
                 'idempotency_key': idempotency_key,
             }
@@ -101,6 +104,7 @@ class PosCaisseApi(http.Controller):
                 'name': commande.name,
                 'state': commande.state,
                 'total': commande.total,
+                'is_vc': commande.is_vc,
                 'mouvement_id': commande.mouvement_id.id or None,
             }
             return {"status": "success", "commande": data}
@@ -192,11 +196,24 @@ class PosCaisseApi(http.Controller):
             params = request.jsonrequest or kwargs or {}
             search = (params.get('search') or '').strip()
             limit = int(params.get('limit') or 200)
-            domain = [('active', '=', True)]
+            actifs_only = bool(params.get('actifs_seulement') or params.get('active_only'))
+            domain = []
+            if actifs_only:
+                domain.append(('active', '=', True))
             if search:
                 domain = ['|', ('name', 'ilike', search), ('prix', '=', search)] + domain
-            recs = request.env['pos.caisse.type.pain'].sudo().search(domain, limit=limit)
-            data = [{'id': r.id, 'name': r.name, 'prix': r.prix, 'poids': r.poids, 'description': r.description, 'active': r.active} for r in recs]
+            recs = request.env['pos.caisse.type.pain'].sudo().search(domain, order='active desc, name asc', limit=limit)
+            data = [
+                {
+                    'id': r.id,
+                    'name': r.name,
+                    'prix': r.prix,
+                    'poids': r.poids,
+                    'description': r.description,
+                    'active': r.active,
+                }
+                for r in recs
+            ]
             return {'status': 'success', 'data': data}
         except Exception as e:
             return {'status': 'error', 'message': str(e)}

@@ -7,7 +7,7 @@ class PosVendeur(models.Model):
     _order = 'name'
 
     name = fields.Char('Nom du vendeur', required=True, help="Nom complet du vendeur")
-    carte_numero = fields.Char('Numéro de carte', required=True, unique=True, help="Numéro de carte unique du vendeur")
+    carte_numero = fields.Char('Numéro de carte', required=True, help="Numéro de carte unique du vendeur")
     telephone = fields.Char('Téléphone')
     adresse = fields.Text('Adresse')
     active = fields.Boolean('Actif', default=True)
@@ -80,6 +80,24 @@ class TypePain(models.Model):
             name = f"{pain.name} ({pain.prix} FC - {pain.poids}g)"
             result.append((pain.id, name))
         return result
+
+    def unlink(self):
+        """Archive (active=False) au lieu de supprimer si référencé par des lignes de commande.
+
+        Cela évite les échecs d'upgrade lorsque Odoo tente de supprimer des enregistrements
+        fournis par des données XML qui sont désormais absentes, tout en préservant l'historique.
+        """
+        Line = self.env['pos.caisse.commande.line'].sudo()
+        to_delete = self.browse()
+        for rec in self:
+            if Line.search_count([('type_pain_id', '=', rec.id)]):
+                # Archiver au lieu de supprimer
+                rec.active = False
+            else:
+                to_delete |= rec
+        if to_delete:
+            return super(TypePain, to_delete).unlink()
+        return True
 
 class PosSession(models.Model):
     _name = 'pos.caisse.session'
@@ -162,7 +180,12 @@ class PosCommande(models.Model):
     date = fields.Datetime('Date', default=fields.Datetime.now, required=True)
     
     # Champs vendeur avec autocomplétion
-    vendeur_id = fields.Many2one('pos.caisse.vendeur', string='Vendeur', help="Sélectionner le vendeur")
+    vendeur_id = fields.Many2one(
+        'pos.caisse.vendeur',
+        string='Vendeur',
+        help="Sélectionner le vendeur",
+        ondelete='set null',  # Don't block deletion of vendeur; keep historical orders with card/name
+    )
     client_card = fields.Char('Numéro de carte client', help="Identifiant principal du client/vendeur")
     client_name = fields.Char('Nom du client', help="Nom complet du client/vendeur")
     
@@ -170,6 +193,8 @@ class PosCommande(models.Model):
         ('cash', 'Cash'),
         ('bp', 'BP (Fin de mois)')
     ], default='cash', string='Type de paiement', required=True)
+    # Vente cash (VC): si coché, la livraison doit inclure +25% de commission
+    is_vc = fields.Boolean('Vente cash (VC)', default=False, help="Si activé, le total cible de livraison inclut +25% de commission")
     line_ids = fields.One2many('pos.caisse.commande.line', 'commande_id', string='Lignes de commande')
     total = fields.Float('Total général', compute='_compute_total', store=True)
     state = fields.Selection([
@@ -307,12 +332,13 @@ class PosCommandeLine(models.Model):
     _description = 'Ligne de commande'
 
     commande_id = fields.Many2one('pos.caisse.commande', string='Commande', required=True, ondelete='cascade')
-    type_pain_id = fields.Many2one('pos.caisse.type.pain', string='Type de pain', required=True)
+    type_pain_id = fields.Many2one('pos.caisse.type.pain', string='Type de pain', required=True, ondelete='cascade')
     quantite = fields.Integer('Quantité', required=True, default=1)
     prix_unitaire = fields.Float('Prix unitaire', related='type_pain_id.prix', store=True, readonly=False)
     poids_unitaire = fields.Float('Poids unitaire (g)', related='type_pain_id.poids', readonly=True)
     poids_total = fields.Float('Poids total (g)', compute='_compute_poids_total', store=True)
     sous_total = fields.Float('Sous-total', compute='_compute_sous_total', store=True)
+
 
     @api.depends('quantite', 'poids_unitaire')
     def _compute_poids_total(self):
