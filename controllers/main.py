@@ -272,3 +272,89 @@ class PosCaisseApi(http.Controller):
             return {'status': 'success'}
         except Exception as e:
             return {'status': 'error', 'message': str(e)}
+
+    @http.route('/api/pos_caisse/commandes/list', type='json', auth='user', methods=['POST'], csrf=False)
+    def list_commandes(self, **kwargs):
+        """Lister les commandes de caisse avec filtres.
+        Paramètres:
+        {
+          "session_id": Optional[int],
+          "date_from": Optional[str], // format YYYY-MM-DD
+          "date_to": Optional[str],   // format YYYY-MM-DD  
+          "search": Optional[str],    // recherche sur client_card, client_nom
+          "limit": Optional[int],
+          "offset": Optional[int]
+        }
+        """
+        try:
+            params = request.jsonrequest or kwargs or {}
+            env = request.env
+            uid = request.uid
+            
+            # Build domain
+            domain = []
+            
+            # Session filter
+            session_id = params.get('session_id')
+            if session_id:
+                domain.append(('session_id', '=', int(session_id)))
+            
+            # Date filters
+            date_from = params.get('date_from')
+            date_to = params.get('date_to')
+            if date_from:
+                domain.append(('date', '>=', date_from + ' 00:00:00'))
+            if date_to:
+                domain.append(('date', '<=', date_to + ' 23:59:59'))
+            
+            # Search filter
+            search = params.get('search')
+            if search:
+                domain += ['|', ('client_card', 'ilike', search), ('client_nom', 'ilike', search)]
+            
+            # Pagination
+            offset = int(params.get('offset', 0))
+            limit = int(params.get('limit', 100))
+            
+            # Access control: users can only see their own session's commands unless admin
+            if not self._is_admin():
+                user_sessions = env['pos.caisse.session'].search([('user_id', '=', uid)])
+                if user_sessions:
+                    domain.append(('session_id', 'in', user_sessions.ids))
+                else:
+                    # No sessions = no commands visible
+                    domain.append(('id', '=', False))
+            
+            Commande = env['pos.caisse.commande'].sudo()
+            commandes = Commande.search(domain, offset=offset, limit=limit, order='date desc')
+            total_count = Commande.search_count(domain)
+            
+            data = []
+            for cmd in commandes:
+                data.append({
+                    'id': cmd.id,
+                    'name': cmd.name,
+                    'date': cmd.date.isoformat() if cmd.date else None,
+                    'client_card': cmd.client_card,
+                    'client_nom': cmd.client_nom,
+                    'type_paiement': cmd.type_paiement,
+                    'total': cmd.total,
+                    'state': cmd.state,
+                    'is_vc': getattr(cmd, 'is_vc', False),
+                    'session_id': cmd.session_id.id if cmd.session_id else None,
+                    'session_name': cmd.session_id.name if cmd.session_id else None,
+                    'user_id': cmd.user_id.id if cmd.user_id else None,
+                    'user_name': cmd.user_id.name if cmd.user_id else None,
+                })
+            
+            return {
+                'status': 'success',
+                'data': data,
+                'total': total_count,
+                'offset': offset,
+                'returned': len(data)
+            }
+            
+        except Exception as e:
+            logging.exception("Erreur dans list_commandes")
+            return {'status': 'error', 'message': str(e)}
