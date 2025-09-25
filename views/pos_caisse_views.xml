@@ -51,7 +51,8 @@
                                     <field name="date"/>
                                     <field name="type_paiement"/>
                                     <field name="total" sum="Total"/>
-                                    <field name="state" widget="tag"/>  
+                                    <field name="state" widget="tag"/> 
+                                    <field name="paiement_state" widget="tag"/> 
                                 </tree>
                             </field>
                         </page>
@@ -290,6 +291,7 @@
                 <field name="type_paiement"/>
                 <field name="total" sum="Total"/>
                 <field name="state"/>
+                <field name="paiement_state"/>
                 <field name="session_id"/>
                 <field name="idempotency_key"/>
             </tree>
@@ -307,6 +309,9 @@
                     <field name="state" widget="statusbar" statusbar_visible="draft,confirme,en_attente_livraison,livre"/>
                 </header>
                 <sheet>
+                    <!-- Badge paiement_state-->
+                    <!-- Ruban pour payé -->
+                    <widget name="web_ribbon" title="Payée" attrs="{'invisible': [('paiement_state','!=','payee')]}"/>
                     <div class="oe_title">
                         <h1>
                             <field name="name" readonly="1"/>
@@ -323,6 +328,7 @@
                             <field name="vendeur_id"/>
                             <field name="type_paiement" widget="radio"/>
                             <field name="total" readonly="1"/>
+                            <field name="paiement_state" invisible="1"/>    
                         </group>
                     </group>
                     <notebook>

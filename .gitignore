@@ -2,3 +2,4 @@
 .vscode/tasks.json
 models/__pycache__/pos_caisse.cpython-37.pyc
 controllers/__pycache__/main.cpython-37.pyc
+models/__pycache__/pos_caisse.cpython-37.pyc

@@ -204,6 +204,11 @@ class PosCommande(models.Model):
         ('livre', 'Livrée'),
         ('annule', 'Annulée')
     ], default='draft', string='État')
+    paiement_state = fields.Selection([
+        ('non_payee', 'Non payée'),
+        ('payee', 'Payée')
+    ], default='non_payee', string='État du paiement')
+
     mouvement_id = fields.Many2one('pos.caisse.mouvement', string='Mouvement de caisse associé')
     idempotency_key = fields.Char('Clé d\'idempotence', help="Clé unique pour éviter les doublons de commande")
 
@@ -337,7 +342,7 @@ class PosCommandeLine(models.Model):
     prix_unitaire = fields.Float('Prix unitaire', related='type_pain_id.prix', store=True, readonly=False)
     poids_unitaire = fields.Float('Poids unitaire (g)', related='type_pain_id.poids', readonly=True)
     poids_total = fields.Float('Poids total (g)', compute='_compute_poids_total', store=True)
-    sous_total = fields.Float('Sous-total', compute='_compute_sous_total', store=True)
+    sous_total = fields.Float('Sous-total', compute='_compute_sous_total', store=True)  
 
 
     @api.depends('quantite', 'poids_unitaire')
@@ -382,6 +387,10 @@ class PosMouvement(models.Model):
     motif = fields.Char('Motif', required=True, help="Raison du mouvement")
     commande_id = fields.Many2one('pos.caisse.commande', string='Commande liée')
     user_id = fields.Many2one('res.users', string='Utilisateur', default=lambda self: self.env.user, required=True)
+    
+    # Champs pour lier aux paies (ajoutés dynamiquement depuis le contexte)
+    paie_vendeur_id = fields.Many2one('pos.paie.vendeur', string='Paie Vendeur liée')
+    paie_wizard_id = fields.Many2one('pos.paie.wizard', string='Paie Wizard liée')
 
     @api.constrains('montant')
     def _check_montant_positif(self):
@@ -399,10 +408,37 @@ class PosMouvement(models.Model):
 
     @api.model
     def create(self, vals):
-        """Validation lors de la création"""
+        """Validation lors de la création et confirmation automatique des paies"""
         # Valider que le motif est renseigné pour les sorties
         if vals.get('type') == 'sortie' and not vals.get('motif'):
             raise ValueError("Le motif est obligatoire pour les sorties de caisse.")
         
+        # Récupérer les IDs de paie depuis le contexte si présents
+        ctx = self.env.context or {}
+        paie_vendeur_id = ctx.get('default_paie_vendeur_id')
+        paie_wizard_id = ctx.get('default_paie_wizard_id')
+        
+        if paie_vendeur_id:
+            vals['paie_vendeur_id'] = paie_vendeur_id
+        if paie_wizard_id:
+            vals['paie_wizard_id'] = paie_wizard_id
+        
         mouvement = super().create(vals)
+        
+        # Confirmer automatiquement les paies associées après création du mouvement
+        if mouvement.type == 'sortie':
+            if mouvement.paie_vendeur_id:
+                try:
+                    mouvement.paie_vendeur_id.action_confirmer_paie()
+                except Exception as e:
+                    import logging
+                    logging.warning("Erreur lors de la confirmation de la paie vendeur %s: %s", mouvement.paie_vendeur_id.id, str(e))
+            
+            if mouvement.paie_wizard_id:
+                try:
+                    mouvement.paie_wizard_id.action_confirmer_paie()
+                except Exception as e:
+                    import logging
+                    logging.warning("Erreur lors de la confirmation de la paie wizard %s: %s", mouvement.paie_wizard_id.id, str(e))
+        
         return mouvement
