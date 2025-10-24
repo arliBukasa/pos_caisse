@@ -1,0 +1,93 @@
+--- a/app/src/main/java/com/bulkasoft/pos/data/sync/SyncRepository.kt
++++ b/app/src/main/java/com/bulkasoft/pos/data/sync/SyncRepository.kt
+@@ -33,16 +33,28 @@ class SyncRepository(context: Context) {
+ 
+     // Helper: extract onlineId from JSON-RPC response and/or headers
+     private fun extractOnlineId(resp: retrofit2.Response<JsonRpcResponse<CreerCommandeResponse>>): Long? {
+         return try {
++            // Tentative 1 : extraction depuis le body JSON
+             val idAny = (resp.body()?.result?.commande as? Map<*, *>)?.get("id")
+             val idFromBody = when (idAny) {
+                 is Number -> idAny.toLong()
+                 is String -> idAny.toLongOrNull()
+                 else -> null
+             }
+-            if (idFromBody != null) return idFromBody
++            if (idFromBody != null) {
++                Log.d("SyncRepository", "extractOnlineId: found in body = $idFromBody")
++                return idFromBody
++            }
++            
++            // Tentative 2 : extraction depuis header Location
+             val location = resp.headers()["Location"]
+-            location?.substringAfterLast('/')?.toLongOrNull()
++            val idFromLocation = location?.substringAfterLast('/')?.toLongOrNull()
++            if (idFromLocation != null) {
++                Log.d("SyncRepository", "extractOnlineId: found in Location header = $idFromLocation")
++                return idFromLocation
++            }
++            
++            // Échec : aucune source n'a fourni d'ID
++            Log.w("SyncRepository", "extractOnlineId: FAILED - no onlineId found in body or headers. Response code=${resp.code()}")
++            null
+         } catch (e: Exception) {
+-            Log.w("SyncRepository", "extractOnlineId failed: ${e.message}")
++            Log.e("SyncRepository", "extractOnlineId: EXCEPTION - ${e.message}", e)
+             null
+         }
+     }
+@@ -117,13 +129,23 @@ class SyncRepository(context: Context) {
+             val resp = NetworkModule.api.creerCommande(body)
+             Log.d("SyncRepository", "createOrQueue: response code=${resp.code()} success=${resp.isSuccessful}")
+             if (resp.isSuccessful || resp.code() == 409) {
+                 val onlineId = extractOnlineId(resp)
+-                Log.d("SyncRepository", "createOrQueue: server accepted, onlineId=$onlineId")
+-                // Mirror locally as SYNCED for UI dashboards
+-                saveMirrorSynced(clientCard, clientName, typePaiement, totalFc, lignes, key, onlineId, sessionId, isVc)
+-                return@withContext true
++                
++                // VALIDATION STRICTE : onlineId OBLIGATOIRE
++                if (onlineId != null) {
++                    Log.d("SyncRepository", "createOrQueue: SUCCESS - server accepted, onlineId=$onlineId")
++                    // Mirror locally as SYNCED for UI dashboards
++                    saveMirrorSynced(clientCard, clientName, typePaiement, totalFc, lignes, key, onlineId, sessionId, isVc)
++                    return@withContext true
++                } else {
++                    // Serveur a accepté mais pas d'onlineId → queue en LOCAL pour retry
++                    Log.w("SyncRepository", "createOrQueue: ANOMALY - server accepted (${resp.code()}) but onlineId=null, queueing idemKey=$key")
++                    saveLocalCommande(clientCard, clientName, typePaiement, totalFc, lignes, key, sessionId, isVc)
++                    return@withContext false
++                }
+             } else {
+                 // Queue locally on HTTP error
++                Log.w("SyncRepository", "createOrQueue: HTTP ERROR ${resp.code()}, queueing idemKey=$key")
+                 saveLocalCommande(clientCard, clientName, typePaiement, totalFc, lignes, key, sessionId, isVc)
+                 return@withContext false
+             }
+@@ -158,12 +180,22 @@ class SyncRepository(context: Context) {
+             val resp = NetworkModule.api.creerCommande(req)
+             Log.d("SyncRepository", "pushOne: response code=${resp.code()} success=${resp.isSuccessful}")
+             if (resp.isSuccessful || resp.code() == 409) {
+                 val onlineId = extractOnlineId(resp)
+-                dao.markSynced(cmd.localId, onlineId, LocalCommande.Status.SYNCED, System.currentTimeMillis())
+-                Log.d("SyncRepository", "pushOne: marked SYNCED localId=${cmd.localId} onlineId=${onlineId}")
+-                true
++                
++                // VALIDATION STRICTE : onlineId OBLIGATOIRE pour marquer SYNCED
++                if (onlineId != null) {
++                    dao.markSynced(cmd.localId, onlineId, LocalCommande.Status.SYNCED, System.currentTimeMillis())
++                    Log.d("SyncRepository", "pushOne: SUCCESS - marked SYNCED localId=${cmd.localId} onlineId=${onlineId}")
++                    true
++                } else {
++                    // Serveur a accepté (200/409) mais pas d'onlineId → FAILED pour retry
++                    Log.w("SyncRepository", "pushOne: ANOMALY - server accepted (${resp.code()}) but onlineId=null, marking FAILED for retry localId=${cmd.localId}")
++                    dao.markFailed(cmd.localId, LocalCommande.Status.FAILED, System.currentTimeMillis())
++                    false
++                }
+             } else {
+                 val err = try { resp.errorBody()?.string()?.take(500) } catch (_: Exception) { null }
+-                Log.w("SyncRepository", "pushOne: mark FAILED localId=${cmd.localId} code=${resp.code()} err=${err}")
++                Log.w("SyncRepository", "pushOne: HTTP ERROR - mark FAILED localId=${cmd.localId} code=${resp.code()} err=${err}")
+                 dao.markFailed(cmd.localId, LocalCommande.Status.FAILED, System.currentTimeMillis())
+                 false
+             }
