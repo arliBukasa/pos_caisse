@@ -343,8 +343,8 @@ class PosCaisseApi(http.Controller):
                     'is_vc': getattr(cmd, 'is_vc', False),
                     'session_id': cmd.session_id.id if cmd.session_id else None,
                     'session_name': cmd.session_id.name if cmd.session_id else None,
-                    'user_id': cmd.user_id.id if cmd.user_id else None,
-                    'user_name': cmd.user_id.name if cmd.user_id else None,
+                    'user_id': cmd.session_id.user_id.id if cmd.session_id and cmd.session_id.user_id else None,
+                    'user_name': cmd.session_id.user_id.name if cmd.session_id and cmd.session_id.user_id else None,
                 })
             
             return {
